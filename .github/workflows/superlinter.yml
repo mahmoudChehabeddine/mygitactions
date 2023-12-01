@@ -1,17 +1,31 @@
 name: Super-Linter
-
-on: push
+on:
+  push:
+    branches:
+      - main
 
 jobs:
-  super-lint:
-    name: Lint code base
+  build-and-deploy:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
 
-      - name: Run Super-Linter
-        uses: github/super-linter@v4
-        env:
-          DEFAULT_BRANCH: main
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: executing remote ssh commands
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.SSH_KEY }}
+        port: ${{ secrets.PORT }}
+        script: sudo docker run -d --name postgres -e POSTGRES_PASSWORD=123 -p 5432:5432 postgres:13
+   
+    - name: executing remote ssh commands
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.SSH_KEY }}
+        port: ${{ secrets.PORT }}
+        script: sudo docker exec -it postgres psql -U postgres -c "CREATE USER moodleuser WITH PASSWORD '123';" && sudo docker exec -it postgres psql -U postgres -c "CREATE DATABASE moodle OWNER moodleuser;"
